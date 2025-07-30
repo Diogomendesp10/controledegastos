@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Controle de Gastos Mensal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <style>
+        body {
+            font-family: 'Inter', sans-serif; 
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 450px; 
+            height: auto; 
+            min-height: 300px; 
+            max-height: 450px; 
+            margin-left: auto;
+            margin-right: auto;
+        }
+        #listaDespesasContainer::-webkit-scrollbar {
+            width: 8px;
+        }
+        #listaDespesasContainer::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        #listaDespesasContainer::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+        #listaDespesasContainer::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8; 
+        }
+        
+
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="bg-gray-100 text-gray-800">
+
+    <div class="container mx-auto p-4 sm:p-6 lg:p-8 max-w-5xl">
+
+        <header class="mb-8 text-center">
+            <h1 class="text-3xl sm:text-4xl font-bold text-indigo-700">Controle Financeiro</h1>
+            <p class="mt-2 text-lg text-gray-600">Planilha de gastos</p>
+        </header>
+
+        <main class="space-y-8">
+            <section class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="md:col-span-1 bg-white p-6 rounded-xl shadow-lg">
+                    <h2 class="text-xl font-semibold text-indigo-600 mb-4">Soldo</h2>
+                    <p class="text-sm text-gray-600 mb-2">Informe seu soldo:</p>
+                    <div class="space-y-2">
+                        <div>
+                            <label for="salarioMensal" class="block text-sm font-medium text-gray-700">Soldo (R$):</label>
+                            <input type="number" id="salarioMensal" name="salarioMensal" placeholder="Ex: 3000" class="form-input">
+                            <p id="salarioError" class="text-xs text-red-500 mt-1 hidden"></p>
+                        </div>
+                        <button type="button" id="atualizarRendaBtn" class="btn btn-primary w-full py-2">Adicionar Soldo</button>
+                    </div>
+                </div>
+
+                <div class="md:col-span-2 bg-white p-6 rounded-xl shadow-lg">
+                    <h2 class="text-xl font-semibold text-indigo-600 mb-4">📊 Resumo Financeiro</h2>
+                    <p class="text-sm text-gray-600 mb-4">Acompanhe em tempo real o resumo da sua situação financeira: seu soldo, o total já gasto e o quanto ainda resta este mês.</p>
+                    <div class="space-y-3">
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-700">Soldo Informado:</span>
+                            <span id="displaySalario" class="font-semibold text-lg text-green-600">R$ 0,00</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-700">Total de Despesas:</span>
+                            <span id="displayTotalDespesas" class="font-semibold text-lg text-red-600">R$ 0,00</span>
+                        </div>
+                        <hr class="my-2 border-gray-200">
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-700 font-bold text-lg">Soldo Restante:</span>
+                            <span id="displaySaldoRestante" class="font-bold text-xl text-indigo-700">R$ 0,00</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="formSection" class="bg-white p-6 rounded-xl shadow-lg">
+                <h2 id="formTitle" class="text-xl font-semibold text-indigo-600 mb-4">💸 Adicionar Nova Despesa</h2>
+                <p id="formDescription" class="text-sm text-gray-600 mb-4">Registre cada uma de suas despesas. Detalhar seus gastos ajuda a entender para onde seu dinheiro está indo.</p>
+                <form id="formAdicionarDespesa" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 items-end">
+                    <input type="hidden" id="editingExpenseId" name="editingExpenseId">
+                    <div>
+                        <label for="tipoDespesa" class="block text-sm font-medium text-gray-700">Tipo de Despesa:</label>
+                        <input type="text" id="tipoDespesa" name="tipoDespesa" placeholder="Ex: Alimentação" class="form-input" required>
+                    </div>
+                    <div class="sm:col-span-2 md:col-span-1">
+                        <label for="descricaoDespesa" class="block text-sm font-medium text-gray-700">Descrição (Opcional):</label>
+                        <input type="text" id="descricaoDespesa" name="descricaoDespesa" placeholder="Ex: Almoço" class="form-input">
+                    </div>
+                    <div>
+                        <label for="valorDespesa" class="block text-sm font-medium text-gray-700">Valor (R$):</label>
+                        <input type="number" id="valorDespesa" name="valorDespesa" placeholder="Ex: 25.50" step="0.01" class="form-input" required>
+                    </div>
+                    <button type="submit" id="submitDespesaBtn" class="btn btn-primary w-full sm:w-auto md:col-start-4">Adicionar Despesa</button>
+                    <button type="button" id="cancelEditBtn" class="btn bg-gray-500 hover:bg-gray-600 focus:ring-gray-400 w-full sm:w-auto hidden md:col-start-3">Cancelar Edição</button>
+                </form>
+            </section>
+
+            <section class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="bg-white p-6 rounded-xl shadow-lg">
+                    <h2 class="text-xl font-semibold text-indigo-600 mb-4">📋 Lista de Despesas</h2>
+                    <p class="text-sm text-gray-600 mb-4">Veja todas as suas despesas lançadas. Se precisar corrigir algo, você pode editar ou remover um lançamento aqui.</p>
+                    <div id="listaDespesasContainer" class="max-h-96 overflow-y-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="table-cell text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipo</th>
+                                    <th scope="col" class="table-cell text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">Descrição</th>
+                                    <th scope="col" class="table-cell text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Valor</th>
+                                    <th scope="col" class="table-cell text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="corpoTabelaDespesas" class="bg-white divide-y divide-gray-200">
+                                <tr id="linhaSemDespesas">
+                                    <td colspan="4" class="table-cell text-center text-gray-500 py-4">Nenhuma despesa adicionada ainda.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="bg-white p-6 rounded-xl shadow-lg">
+                    <h2 class="text-xl font-semibold text-indigo-600 mb-4">📊 Visualização dos Gastos</h2>
+                    <p class="text-sm text-gray-600 mb-4">Visualize seus gastos! Este gráfico mostra como suas despesas estão distribuídas por categoria, te ajudando a identificar os maiores focos de gastos.</p>
+                    <div class="chart-container">
+                        <canvas id="graficoDespesas"></canvas>
+                    </div>
+                     <p id="mensagemGraficoVazio" class="text-center text-gray-500 mt-4 hidden">Adicione despesas para ver o gráfico.</p>
+                </div>
+            </section>
+        </main>
+
+        <footer class="text-center mt-12 py-4 border-t border-gray-200">
+            <p class="text-sm text-gray-600">&copy; <span id="anoAtual"></span> Controle Financeiro.</p>
+        </footer>
+
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const salarioMensalInput = document.getElementById('salarioMensal');
+            const atualizarRendaBtn = document.getElementById('atualizarRendaBtn');
+            const salarioError = document.getElementById('salarioError');
+            const displaySalario = document.getElementById('displaySalario');
+            const displayTotalDespesas = document.getElementById('displayTotalDespesas');
+            const displaySaldoRestante = document.getElementById('displaySaldoRestante');
+
+            const formAdicionarDespesa = document.getElementById('formAdicionarDespesa');
+            const editingExpenseIdInput = document.getElementById('editingExpenseId');
+            const tipoDespesaInput = document.getElementById('tipoDespesa');
+            const descricaoDespesaInput = document.getElementById('descricaoDespesa');
+            const valorDespesaInput = document.getElementById('valorDespesa');
+            const submitDespesaBtn = document.getElementById('submitDespesaBtn');
+            const cancelEditBtn = document.getElementById('cancelEditBtn');
+            const formTitle = document.getElementById('formTitle');
+            const formDescription = document.getElementById('formDescription');
+
+
+            const corpoTabelaDespesas = document.getElementById('corpoTabelaDespesas');
+            const linhaSemDespesas = document.getElementById('linhaSemDespesas');
+            const mensagemGraficoVazio = document.getElementById('mensagemGraficoVazio');
+
+            document.getElementById('anoAtual').textContent = new Date().getFullYear();
+
+            let salario = 0;
+            let despesas = [];
+            let proximoIdDespesa = 1;
+            let graficoDespesasInstance = null;
+
+            function carregarDados() {
+                const salarioSalvo = localStorage.getItem('meuControleFinanceiro_salario');
+                const despesasSalvas = localStorage.getItem('meuControleFinanceiro_despesas');
+                const proximoIdSalvo = localStorage.getItem('meuControleFinanceiro_proximoId');
+
+                if (salarioSalvo) {
+                    salario = parseFloat(salarioSalvo);
+                    salarioMensalInput.value = salario; 
+                }
+                if (despesasSalvas) {
+                    despesas = JSON.parse(despesasSalvas);
+                }
+                if (proximoIdSalvo) {
+                    proximoIdDespesa = parseInt(proximoIdSalvo);
+                }
+                atualizarResumo();
+                renderizarTabelaDespesas();
+                atualizarGraficoDespesas();
+            }
+
+            function salvarDados() {
+                localStorage.setItem('meuControleFinanceiro_salario', salario.toString());
+                localStorage.setItem('meuControleFinanceiro_despesas', JSON.stringify(despesas));
+                localStorage.setItem('meuControleFinanceiro_proximoId', proximoIdDespesa.toString());
+            }
+            
+            function formatarMoeda(valor) {
+                return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+            }
+
+            atualizarRendaBtn.addEventListener('click', () => {
+                const valorInput = parseFloat(salarioMensalInput.value);
+                if (isNaN(valorInput) || valorInput < 0) {
+                    salarioError.textContent = 'Valor inválido. Insira um número positivo.';
+                    salarioError.classList.remove('hidden');
+                    // Não zerar o salário aqui se já houver um valor válido, apenas mostrar erro.
+                    // Se o usuário quiser zerar, ele pode limpar o campo e clicar em atualizar.
+                } else {
+                    salarioError.classList.add('hidden');
+                    salarioError.textContent = '';
+                    salario = valorInput;
+                    atualizarResumo();
+                    salvarDados();
+                }
+            });
+            
+            // Limpar erro ao digitar no campo de salário
+            salarioMensalInput.addEventListener('input', () => {
+                if (!salarioError.classList.contains('hidden')) {
+                    salarioError.classList.add('hidden');
+                    salarioError.textContent = '';
+                }
+            });
+
+
+            function atualizarResumo() {
+                displaySalario.textContent = formatarMoeda(salario);
+                const totalDespesas = despesas.reduce((acc, despesa) => acc + despesa.valor, 0);
+                displayTotalDespesas.textContent = formatarMoeda(totalDespesas);
+                const saldoRestante = salario - totalDespesas;
+                displaySaldoRestante.textContent = formatarMoeda(saldoRestante);
+
+                displaySaldoRestante.classList.toggle('text-red-600', saldoRestante < 0);
+                displaySaldoRestante.classList.toggle('text-green-600', saldoRestante >= 0 && salario > 0);
+                displaySaldoRestante.classList.toggle('text-indigo-700', saldoRestante >= 0 && salario === 0);
+            }
+
+            function renderizarTabelaDespesas() {
+                corpoTabelaDespesas.innerHTML = ''; 
+
+                if (despesas.length === 0) {
+                    corpoTabelaDespesas.appendChild(linhaSemDespesas);
+                    linhaSemDespesas.classList.remove('hidden');
+                    return;
+                }
+                linhaSemDespesas.classList.add('hidden');
+
+                despesas.forEach(despesa => {
+                    const linha = document.createElement('tr');
+                    linha.innerHTML = `
+                        <td class="table-cell text-sm text-gray-900">${despesa.tipo}</td>
+                        <td class="table-cell text-sm text-gray-500 hidden sm:table-cell">${despesa.descricao || '-'}</td>
+                        <td class="table-cell text-sm text-gray-500">${formatarMoeda(despesa.valor)}</td>
+                        <td class="table-cell text-sm actions-cell">
+                            <button data-id="${despesa.id}" class="btn btn-secondary btn-sm py-1 px-2 text-xs editar-despesa-btn">Editar</button>
+                            <button data-id="${despesa.id}" class="btn btn-danger btn-sm py-1 px-2 text-xs remover-despesa-btn">Remover</button>
+                        </td>
+                    `;
+                    corpoTabelaDespesas.appendChild(linha);
+                });
+
+                document.querySelectorAll('.remover-despesa-btn').forEach(button => {
+                    button.addEventListener('click', (e) => {
+                        const idParaRemover = parseInt(e.target.dataset.id);
+                        removerDespesa(idParaRemover);
+                    });
+                });
+                document.querySelectorAll('.editar-despesa-btn').forEach(button => {
+                    button.addEventListener('click', (e) => {
+                        const idParaEditar = parseInt(e.target.dataset.id);
+                        iniciarEdicaoDespesa(idParaEditar);
+                    });
+                });
+            }
+            
+            function setModoFormulario(modo, despesa = null) {
+                if (modo === 'edicao') {
+                    formTitle.textContent = '✏️ Editar Despesa';
+                    formDescription.textContent = 'Modifique os detalhes da despesa selecionada abaixo.';
+                    submitDespesaBtn.textContent = 'Salvar Alterações';
+                    submitDespesaBtn.classList.remove('btn-primary');
+                    submitDespesaBtn.classList.add('btn-secondary');
+                    cancelEditBtn.classList.remove('hidden');
+                    editingExpenseIdInput.value = despesa.id;
+                    tipoDespesaInput.value = despesa.tipo;
+                    descricaoDespesaInput.value = despesa.descricao;
+                    valorDespesaInput.value = despesa.valor;
+                    document.getElementById('formSection').scrollIntoView({ behavior: 'smooth' });
+                } else { // modo 'adicao'
+                    formTitle.textContent = '💸 Adicionar Nova Despesa';
+                    formDescription.textContent = 'Registre cada uma de suas despesas. Detalhar seus gastos ajuda a entender para onde seu dinheiro está indo.';
+                    submitDespesaBtn.textContent = 'Adicionar Despesa';
+                    submitDespesaBtn.classList.remove('btn-secondary');
+                    submitDespesaBtn.classList.add('btn-primary');
+                    cancelEditBtn.classList.add('hidden');
+                    editingExpenseIdInput.value = '';
+                    formAdicionarDespesa.reset();
+                }
+            }
+
+            function iniciarEdicaoDespesa(id) {
+                const despesaParaEditar = despesas.find(d => d.id === id);
+                if (despesaParaEditar) {
+                    setModoFormulario('edicao', despesaParaEditar);
+                }
+            }
+
+            cancelEditBtn.addEventListener('click', () => {
+                setModoFormulario('adicao');
+            });
+
+            formAdicionarDespesa.addEventListener('submit', (e) => {
+                e.preventDefault();
+
+                const tipo = tipoDespesaInput.value.trim();
+                const descricao = descricaoDespesaInput.value.trim();
+                const valor = parseFloat(valorDespesaInput.value);
+                const idEmEdicao = editingExpenseIdInput.value ? parseInt(editingExpenseIdInput.value) : null;
+
+                let errorMsgElement = formAdicionarDespesa.querySelector('.form-error-msg');
+                if (errorMsgElement) errorMsgElement.remove();
+
+
+                if (tipo === '' || isNaN(valor) || valor <= 0) {
+                    errorMsgElement = document.createElement('p');
+                    errorMsgElement.classList.add('form-error-msg', 'text-red-500', 'text-sm', 'mt-2', 'md:col-span-4', 'text-center');
+                    errorMsgElement.textContent = 'Por favor, preencha o tipo e um valor válido para a despesa.';
+                    // Insere antes do primeiro botão
+                    const firstButton = formAdicionarDespesa.querySelector('button[type="submit"], button[type="button"]');
+                    if(firstButton) {
+                        formAdicionarDespesa.insertBefore(errorMsgElement, firstButton.closest('div') || firstButton);
+                    } else {
+                         formAdicionarDespesa.appendChild(errorMsgElement);
+                    }
+                    setTimeout(() => { if(errorMsgElement) errorMsgElement.remove(); }, 3000);
+                    return;
+                }
+
+
+                if (idEmEdicao) { 
+                    const index = despesas.findIndex(d => d.id === idEmEdicao);
+                    if (index !== -1) {
+                        despesas[index] = { ...despesas[index], tipo, descricao, valor };
+                    }
+                } else { 
+                    despesas.push({ id: proximoIdDespesa++, tipo, descricao, valor });
+                }
+                
+                setModoFormulario('adicao'); 
+                tipoDespesaInput.focus();
+
+                atualizarResumo();
+                renderizarTabelaDespesas();
+                atualizarGraficoDespesas();
+                salvarDados();
+            });
+            
+
+            function removerDespesa(id) {
+                if (editingExpenseIdInput.value && parseInt(editingExpenseIdInput.value) === id) {
+                    setModoFormulario('adicao');
+                }
+                despesas = despesas.filter(despesa => despesa.id !== id);
+                atualizarResumo();
+                renderizarTabelaDespesas();
+                atualizarGraficoDespesas();
+                salvarDados();
+            }
+
+            function atualizarGraficoDespesas() {
+                const ctx = document.getElementById('graficoDespesas').getContext('2d');
+                
+                if (despesas.length === 0) {
+                    mensagemGraficoVazio.classList.remove('hidden');
+                    if (graficoDespesasInstance) {
+                        graficoDespesasInstance.destroy();
+                        graficoDespesasInstance = null;
+                    }
+                    return;
+                }
+                mensagemGraficoVazio.classList.add('hidden');
+
+                const dadosAgrupados = despesas.reduce((acc, despesa) => {
+                    acc[despesa.tipo] = (acc[despesa.tipo] || 0) + despesa.valor;
+                    return acc;
+                }, {});
+
+                const tipos = Object.keys(dadosAgrupados);
+                const valores = Object.values(dadosAgrupados);
+
+                const coresBase = [
+                    '#4f46e5', '#10b981', '#ef4444', '#f59e0b', '#3b82f6', '#8b5cf6', 
+                    '#ec4899', '#6b7280', '#d946ef', '#06b6d4', '#f97316', '#84cc16'
+                ];
+                const coresGrafico = tipos.map((_, i) => coresBase[i % coresBase.length]);
+
+                if (graficoDespesasInstance) {
+                    graficoDespesasInstance.data.labels = tipos;
+                    graficoDespesasInstance.data.datasets[0].data = valores;
+                    graficoDespesasInstance.data.datasets[0].backgroundColor = coresGrafico;
+                    graficoDespesasInstance.update();
+                } else {
+                    graficoDespesasInstance = new Chart(ctx, {
+                        type: 'pie',
+                        data: {
+                            labels: tipos,
+                            datasets: [{
+                                label: 'Distribuição de Despesas',
+                                data: valores,
+                                backgroundColor: coresGrafico,
+                                borderWidth: 1,
+                                borderColor: '#fff'
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    position: 'bottom',
+                                    labels: {
+                                        boxWidth: 12,
+                                        padding: 15,
+                                        generateLabels: function(chart) {
+                                            const data = chart.data;
+                                            if (data.labels.length && data.datasets.length) {
+                                                return data.labels.map(function(label, i) {
+                                                    const meta = chart.getDatasetMeta(0);
+                                                    const style = meta.controller.getStyle(i);
+                                                    let text = label;
+                                                    if (text.length > 16) {
+                                                        const words = text.split(' ');
+                                                        if (words.length > 1 && words.some(w => w.length > 8)) {
+                                                            text = words.map(w => w.length > 8 ? w.substring(0,8) + '...' : w).join(' ');
+                                                        } else if (text.length > 16){
+                                                            text = text.substring(0, 15) + '...';
+                                                        }
+                                                    }
+                                                    return {
+                                                        text: text,
+                                                        fillStyle: style.backgroundColor,
+                                                        strokeStyle: style.borderColor,
+                                                        lineWidth: style.borderWidth,
+                                                        hidden: isNaN(data.datasets[0].data[i]) || meta.data[i].hidden,
+                                                        index: i
+                                                    };
+                                                });
+                                            }
+                                            return [];
+                                        }
+                                    }
+                                },
+                                tooltip: {
+                                    callbacks: {
+                                        label: function(context) {
+                                            let label = context.label || '';
+                                            if (label) {
+                                                label += ': ';
+                                            }
+                                            if (context.parsed !== null) {
+                                                label += formatarMoeda(context.parsed);
+                                            }
+                                            return label;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+            }
+            
+            carregarDados();
+        });
+    </script>
+</body>
+</html>
