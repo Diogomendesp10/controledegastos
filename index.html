@@ -4,23 +4,76 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Controle de Gastos Mensal</title>
+    <!-- Carregando Tailwind CSS para estilização responsiva -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Carregando Chart.js para o gráfico de despesas -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    
+
     <style>
+        /* Estilos globais e de layout para a aplicação */
         body {
-            font-family: 'Inter', sans-serif; 
+            font-family: 'Inter', sans-serif;
         }
+        /* Estilo para inputs e botões para uma aparência mais coesa */
+        .form-input {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border-width: 1px;
+            border-radius: 0.5rem;
+            border-color: #e2e8f0;
+            background-color: #f8fafc;
+            color: #1a202c;
+            transition: all 0.2s ease-in-out;
+        }
+        .form-input:focus {
+            outline: none;
+            border-color: #15803d; /* Verde escuro para o foco */
+            box-shadow: 0 0 0 3px rgba(21, 128, 61, 0.3); /* Sombra verde */
+        }
+        .btn {
+            font-weight: 600;
+            border-radius: 0.5rem;
+            transition: all 0.2s ease-in-out;
+            cursor: pointer;
+        }
+        .btn-primary {
+            background-color: #15803d; /* Verde escuro */
+            color: #fff;
+        }
+        .btn-primary:hover {
+            background-color: #166534; /* Verde mais escuro no hover */
+        }
+        .btn-secondary {
+            background-color: #e2e8f0;
+            color: #334155;
+        }
+        .btn-secondary:hover {
+            background-color: #cbd5e1;
+        }
+        .btn-danger {
+            background-color: #ef4444;
+            color: #fff;
+        }
+        .btn-danger:hover {
+            background-color: #dc2626;
+        }
+        .btn:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(21, 128, 61, 0.3); /* Sombra verde para todos os botões */
+        }
+        
+        /* Estilo do container do gráfico */
         .chart-container {
             position: relative;
             width: 100%;
-            max-width: 450px; 
-            height: auto; 
-            min-height: 300px; 
-            max-height: 450px; 
+            max-width: 450px;
+            height: auto;
+            min-height: 300px;
+            max-height: 450px;
             margin-left: auto;
             margin-right: auto;
         }
+        /* Estilos para a barra de rolagem da tabela de despesas */
         #listaDespesasContainer::-webkit-scrollbar {
             width: 8px;
         }
@@ -33,10 +86,70 @@
             border-radius: 10px;
         }
         #listaDespesasContainer::-webkit-scrollbar-thumb:hover {
-            background: #94a3b8; 
+            background: #94a3b8;
         }
-        
 
+        /* Estilos para o modal personalizado */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        .modal-content {
+            background: #fff;
+            padding: 2rem;
+            border-radius: 0.75rem;
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            transform: translateY(-20px);
+            transition: transform 0.3s ease;
+        }
+        .modal-overlay.active .modal-content {
+            transform: translateY(0);
+        }
+        .modal-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        /* Estilos para o novo indicador de status */
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #fff;
+            line-height: 1;
+            cursor: pointer;
+            text-transform: uppercase;
+        }
+        .status-paid {
+            background-color: #15803d; /* Verde escuro */
+        }
+        .status-unpaid {
+            background-color: #dc2626; /* Vermelho escuro */
+        }
     </style>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
@@ -45,14 +158,15 @@
     <div class="container mx-auto p-4 sm:p-6 lg:p-8 max-w-5xl">
 
         <header class="mb-8 text-center">
-            <h1 class="text-3xl sm:text-4xl font-bold text-indigo-700">Controle Financeiro</h1>
+            <h1 class="text-3xl sm:text-4xl font-bold text-green-700">SEM SANHA</h1>
             <p class="mt-2 text-lg text-gray-600">Planilha de gastos</p>
         </header>
 
         <main class="space-y-8">
+            <!-- Seção de Soldo e Resumo Financeiro -->
             <section class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div class="md:col-span-1 bg-white p-6 rounded-xl shadow-lg">
-                    <h2 class="text-xl font-semibold text-indigo-600 mb-4">Soldo</h2>
+                    <h2 class="text-xl font-semibold text-green-600">Soldo 🪖</h2>
                     <p class="text-sm text-gray-600 mb-2">Informe seu soldo:</p>
                     <div class="space-y-2">
                         <div>
@@ -65,7 +179,7 @@
                 </div>
 
                 <div class="md:col-span-2 bg-white p-6 rounded-xl shadow-lg">
-                    <h2 class="text-xl font-semibold text-indigo-600 mb-4">📊 Resumo Financeiro</h2>
+                    <h2 class="text-xl font-semibold text-green-600 mb-4">📊 Resumo Financeiro</h2>
                     <p class="text-sm text-gray-600 mb-4">Acompanhe em tempo real o resumo da sua situação financeira: seu soldo, o total já gasto e o quanto ainda resta este mês.</p>
                     <div class="space-y-3">
                         <div class="flex justify-between items-center">
@@ -79,14 +193,15 @@
                         <hr class="my-2 border-gray-200">
                         <div class="flex justify-between items-center">
                             <span class="text-gray-700 font-bold text-lg">Soldo Restante:</span>
-                            <span id="displaySaldoRestante" class="font-bold text-xl text-indigo-700">R$ 0,00</span>
+                            <span id="displaySaldoRestante" class="font-bold text-xl text-green-700">R$ 0,00</span>
                         </div>
                     </div>
                 </div>
             </section>
 
+            <!-- Seção de Adicionar/Editar Despesa -->
             <section id="formSection" class="bg-white p-6 rounded-xl shadow-lg">
-                <h2 id="formTitle" class="text-xl font-semibold text-indigo-600 mb-4">💸 Adicionar Nova Despesa</h2>
+                <h2 id="formTitle" class="text-xl font-semibold text-green-600 mb-4">💸 Adicionar Nova Despesa</h2>
                 <p id="formDescription" class="text-sm text-gray-600 mb-4">Registre cada uma de suas despesas. Detalhar seus gastos ajuda a entender para onde seu dinheiro está indo.</p>
                 <form id="formAdicionarDespesa" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 items-end">
                     <input type="hidden" id="editingExpenseId" name="editingExpenseId">
@@ -101,29 +216,33 @@
                     <div>
                         <label for="valorDespesa" class="block text-sm font-medium text-gray-700">Valor (R$):</label>
                         <input type="number" id="valorDespesa" name="valorDespesa" placeholder="Ex: 25.50" step="0.01" class="form-input" required>
+                        <!-- Elemento dedicado para a mensagem de erro da despesa -->
+                        <p id="despesaError" class="text-xs text-red-500 mt-1 hidden"></p>
                     </div>
                     <button type="submit" id="submitDespesaBtn" class="btn btn-primary w-full sm:w-auto md:col-start-4">Adicionar Despesa</button>
                     <button type="button" id="cancelEditBtn" class="btn bg-gray-500 hover:bg-gray-600 focus:ring-gray-400 w-full sm:w-auto hidden md:col-start-3">Cancelar Edição</button>
                 </form>
             </section>
 
+            <!-- Seção de Lista de Despesas e Gráfico -->
             <section class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div class="bg-white p-6 rounded-xl shadow-lg">
-                    <h2 class="text-xl font-semibold text-indigo-600 mb-4">📋 Lista de Despesas</h2>
-                    <p class="text-sm text-gray-600 mb-4">Veja todas as suas despesas lançadas. Se precisar corrigir algo, você pode editar ou remover um lançamento aqui.</p>
+                    <h2 class="text-xl font-semibold text-green-600 mb-4">📋 Lista de Despesas</h2>
+                    <p class="text-sm text-gray-600 mb-4">Clique no status para alterar entre PAGO e NÃO PAGO. Você também pode editar ou remover um lançamento aqui.</p>
                     <div id="listaDespesasContainer" class="max-h-96 overflow-y-auto">
                         <table class="min-w-full divide-y divide-gray-200">
                             <thead class="bg-gray-50">
                                 <tr>
-                                    <th scope="col" class="table-cell text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipo</th>
-                                    <th scope="col" class="table-cell text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">Descrição</th>
-                                    <th scope="col" class="table-cell text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Valor</th>
-                                    <th scope="col" class="table-cell text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
+                                    <th scope="col" class="table-cell text-left text-xs font-medium text-gray-500 uppercase tracking-wider p-2">Status</th>
+                                    <th scope="col" class="table-cell text-left text-xs font-medium text-gray-500 uppercase tracking-wider p-2">Tipo</th>
+                                    <th scope="col" class="table-cell text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell p-2">Descrição</th>
+                                    <th scope="col" class="table-cell text-left text-xs font-medium text-gray-500 uppercase tracking-wider p-2">Valor</th>
+                                    <th scope="col" class="table-cell text-left text-xs font-medium text-gray-500 uppercase tracking-wider p-2">Ações</th>
                                 </tr>
                             </thead>
                             <tbody id="corpoTabelaDespesas" class="bg-white divide-y divide-gray-200">
                                 <tr id="linhaSemDespesas">
-                                    <td colspan="4" class="table-cell text-center text-gray-500 py-4">Nenhuma despesa adicionada ainda.</td>
+                                    <td colspan="5" class="table-cell text-center text-gray-500 py-4">Nenhuma despesa adicionada ainda.</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -131,12 +250,12 @@
                 </div>
 
                 <div class="bg-white p-6 rounded-xl shadow-lg">
-                    <h2 class="text-xl font-semibold text-indigo-600 mb-4">📊 Visualização dos Gastos</h2>
+                    <h2 class="text-xl font-semibold text-green-600 mb-4">📊 Visualização dos Gastos</h2>
                     <p class="text-sm text-gray-600 mb-4">Visualize seus gastos! Este gráfico mostra como suas despesas estão distribuídas por categoria, te ajudando a identificar os maiores focos de gastos.</p>
                     <div class="chart-container">
                         <canvas id="graficoDespesas"></canvas>
                     </div>
-                     <p id="mensagemGraficoVazio" class="text-center text-gray-500 mt-4 hidden">Adicione despesas para ver o gráfico.</p>
+                    <p id="mensagemGraficoVazio" class="text-center text-gray-500 mt-4 hidden">Adicione despesas para ver o gráfico.</p>
                 </div>
             </section>
         </main>
@@ -147,8 +266,30 @@
 
     </div>
 
+    <!-- Modal de Confirmação (customizado) -->
+    <div id="confirmModal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h3 class="text-lg font-bold mb-2">Confirmação</h3>
+            <p id="confirmMessage" class="text-gray-700">Tem certeza de que deseja remover esta despesa?</p>
+            <div class="modal-buttons">
+                <button id="confirmCancelBtn" class="btn btn-secondary py-2 px-4">Cancelar</button>
+                <button id="confirmActionBtn" class="btn btn-danger py-2 px-4">Remover</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal de Feedback (customizado) -->
+    <div id="feedbackModal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h3 id="feedbackTitle" class="text-lg font-bold mb-2">Sucesso!</h3>
+            <p id="feedbackMessage" class="text-gray-700">Despesa adicionada com sucesso.</p>
+            <button id="feedbackCloseBtn" class="btn btn-primary py-2 px-4 mt-4">Fechar</button>
+        </div>
+    </div>
+
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            // Obtenção de todos os elementos DOM necessários
             const salarioMensalInput = document.getElementById('salarioMensal');
             const atualizarRendaBtn = document.getElementById('atualizarRendaBtn');
             const salarioError = document.getElementById('salarioError');
@@ -165,114 +306,171 @@
             const cancelEditBtn = document.getElementById('cancelEditBtn');
             const formTitle = document.getElementById('formTitle');
             const formDescription = document.getElementById('formDescription');
-
+            const despesaError = document.getElementById('despesaError');
 
             const corpoTabelaDespesas = document.getElementById('corpoTabelaDespesas');
             const linhaSemDespesas = document.getElementById('linhaSemDespesas');
             const mensagemGraficoVazio = document.getElementById('mensagemGraficoVazio');
 
+            const confirmModal = document.getElementById('confirmModal');
+            const confirmActionBtn = document.getElementById('confirmActionBtn');
+            const confirmCancelBtn = document.getElementById('confirmCancelBtn');
+            const feedbackModal = document.getElementById('feedbackModal');
+            const feedbackTitle = document.getElementById('feedbackTitle');
+            const feedbackMessage = document.getElementById('feedbackMessage');
+            const feedbackCloseBtn = document.getElementById('feedbackCloseBtn');
+            
+            // Define o ano atual no rodapé
             document.getElementById('anoAtual').textContent = new Date().getFullYear();
 
+            // Variáveis de estado da aplicação
             let salario = 0;
             let despesas = [];
             let proximoIdDespesa = 1;
             let graficoDespesasInstance = null;
+            let idParaConfirmarRemocao = null;
 
-            function carregarDados() {
-                const salarioSalvo = localStorage.getItem('meuControleFinanceiro_salario');
-                const despesasSalvas = localStorage.getItem('meuControleFinanceiro_despesas');
-                const proximoIdSalvo = localStorage.getItem('meuControleFinanceiro_proximoId');
-
-                if (salarioSalvo) {
-                    salario = parseFloat(salarioSalvo);
-                    salarioMensalInput.value = salario; 
-                }
-                if (despesasSalvas) {
-                    despesas = JSON.parse(despesasSalvas);
-                }
-                if (proximoIdSalvo) {
-                    proximoIdDespesa = parseInt(proximoIdSalvo);
-                }
+            // Função que centraliza a lógica de atualização da interface e salvamento de dados
+            function atualizarTudo() {
                 atualizarResumo();
                 renderizarTabelaDespesas();
                 atualizarGraficoDespesas();
+                salvarDados();
             }
 
+            // Funções de Gerenciamento de Dados
+            // ---
+
+            /**
+             * Carrega os dados do localStorage ao iniciar a aplicação.
+             */
+            function carregarDados() {
+                try {
+                    const salarioSalvo = localStorage.getItem('meuControleFinanceiro_salario');
+                    const despesasSalvas = localStorage.getItem('meuControleFinanceiro_despesas');
+                    const proximoIdSalvo = localStorage.getItem('meuControleFinanceiro_proximoId');
+
+                    if (salarioSalvo) {
+                        salario = parseFloat(salarioSalvo);
+                        salarioMensalInput.value = salario;
+                    }
+                    if (despesasSalvas) {
+                        const parsedDespesas = JSON.parse(despesasSalvas);
+                        despesas = parsedDespesas.map(d => ({ ...d, pago: d.pago || false }));
+                    }
+                    if (proximoIdSalvo) {
+                        proximoIdDespesa = parseInt(proximoIdSalvo);
+                    }
+                    atualizarTudo();
+                } catch (e) {
+                    console.error('Erro ao carregar dados do localStorage:', e);
+                }
+            }
+
+            /**
+             * Salva o estado atual da aplicação no localStorage.
+             */
             function salvarDados() {
-                localStorage.setItem('meuControleFinanceiro_salario', salario.toString());
-                localStorage.setItem('meuControleFinanceiro_despesas', JSON.stringify(despesas));
-                localStorage.setItem('meuControleFinanceiro_proximoId', proximoIdDespesa.toString());
+                try {
+                    localStorage.setItem('meuControleFinanceiro_salario', salario.toString());
+                    localStorage.setItem('meuControleFinanceiro_despesas', JSON.stringify(despesas));
+                    localStorage.setItem('meuControleFinanceiro_proximoId', proximoIdDespesa.toString());
+                } catch (e) {
+                    console.error('Erro ao salvar dados no localStorage:', e);
+                }
             }
             
+            /**
+             * Formata um valor numérico para o formato de moeda brasileira.
+             * @param {number} valor - O valor a ser formatado.
+             * @returns {string} O valor formatado como "R$ x.xxx,xx".
+             */
             function formatarMoeda(valor) {
                 return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
             }
-
-            atualizarRendaBtn.addEventListener('click', () => {
-                const valorInput = parseFloat(salarioMensalInput.value);
-                if (isNaN(valorInput) || valorInput < 0) {
-                    salarioError.textContent = 'Valor inválido. Insira um número positivo.';
-                    salarioError.classList.remove('hidden');
-                    // Não zerar o salário aqui se já houver um valor válido, apenas mostrar erro.
-                    // Se o usuário quiser zerar, ele pode limpar o campo e clicar em atualizar.
-                } else {
-                    salarioError.classList.add('hidden');
-                    salarioError.textContent = '';
-                    salario = valorInput;
-                    atualizarResumo();
-                    salvarDados();
-                }
-            });
             
-            // Limpar erro ao digitar no campo de salário
-            salarioMensalInput.addEventListener('input', () => {
-                if (!salarioError.classList.contains('hidden')) {
-                    salarioError.classList.add('hidden');
-                    salarioError.textContent = '';
-                }
-            });
+            /**
+             * Mostra um modal de feedback com uma mensagem específica.
+             * @param {string} title - O título do modal.
+             * @param {string} message - A mensagem a ser exibida.
+             */
+            function showFeedbackModal(title, message) {
+                feedbackTitle.textContent = title;
+                feedbackMessage.textContent = message;
+                feedbackModal.classList.remove('hidden');
+                feedbackModal.classList.add('active');
+            }
+            
+            /**
+             * Esconde o modal de feedback.
+             */
+            function hideFeedbackModal() {
+                feedbackModal.classList.remove('active');
+                setTimeout(() => feedbackModal.classList.add('hidden'), 300); // Adiciona um pequeno delay para a transição
+            }
 
+            // Funções de Atualização da Interface
+            // ---
 
+            /**
+             * Atualiza a seção de resumo financeiro com os valores mais recentes.
+             */
             function atualizarResumo() {
                 displaySalario.textContent = formatarMoeda(salario);
-                const totalDespesas = despesas.reduce((acc, despesa) => acc + despesa.valor, 0);
+                
+                // Calcula o total de despesas APENAS das contas NÃO PAGAS
+                const totalDespesas = despesas
+                    .filter(d => !d.pago)
+                    .reduce((acc, despesa) => acc + despesa.valor, 0);
+
                 displayTotalDespesas.textContent = formatarMoeda(totalDespesas);
                 const saldoRestante = salario - totalDespesas;
                 displaySaldoRestante.textContent = formatarMoeda(saldoRestante);
 
+                // Alterna a cor do saldo restante baseado no valor
                 displaySaldoRestante.classList.toggle('text-red-600', saldoRestante < 0);
-                displaySaldoRestante.classList.toggle('text-green-600', saldoRestante >= 0 && salario > 0);
-                displaySaldoRestante.classList.toggle('text-indigo-700', saldoRestante >= 0 && salario === 0);
+                displaySaldoRestante.classList.toggle('text-green-600', saldoRestante > 0);
+                displaySaldoRestante.classList.toggle('text-green-700', saldoRestante === 0);
             }
-
+            
+            /**
+             * Renderiza a tabela de despesas com os dados mais recentes.
+             */
             function renderizarTabelaDespesas() {
-                corpoTabelaDespesas.innerHTML = ''; 
+                corpoTabelaDespesas.innerHTML = '';
 
                 if (despesas.length === 0) {
-                    corpoTabelaDespesas.appendChild(linhaSemDespesas);
                     linhaSemDespesas.classList.remove('hidden');
-                    return;
+                } else {
+                    linhaSemDespesas.classList.add('hidden');
+                    despesas.forEach(despesa => {
+                        const linha = document.createElement('tr');
+                        linha.className = 'hover:bg-gray-50'; // Adiciona um hover na linha
+                        const statusClass = despesa.pago ? 'status-paid' : 'status-unpaid';
+                        const statusText = despesa.pago ? 'PAGA' : 'NÃO PAGA';
+                        linha.innerHTML = `
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                <span class="status-indicator ${statusClass}" data-id="${despesa.id}">
+                                    ${statusText}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${despesa.tipo || '-'}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 hidden sm:table-cell">${despesa.descricao || '-'}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${formatarMoeda(despesa.valor)}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm actions-cell space-x-2">
+                                <button data-id="${despesa.id}" class="btn btn-secondary btn-sm py-1 px-2 text-xs editar-despesa-btn">Editar</button>
+                                <button data-id="${despesa.id}" class="btn btn-danger btn-sm py-1 px-2 text-xs remover-despesa-btn">Remover</button>
+                            </td>
+                        `;
+                        corpoTabelaDespesas.appendChild(linha);
+                    });
                 }
-                linhaSemDespesas.classList.add('hidden');
-
-                despesas.forEach(despesa => {
-                    const linha = document.createElement('tr');
-                    linha.innerHTML = `
-                        <td class="table-cell text-sm text-gray-900">${despesa.tipo}</td>
-                        <td class="table-cell text-sm text-gray-500 hidden sm:table-cell">${despesa.descricao || '-'}</td>
-                        <td class="table-cell text-sm text-gray-500">${formatarMoeda(despesa.valor)}</td>
-                        <td class="table-cell text-sm actions-cell">
-                            <button data-id="${despesa.id}" class="btn btn-secondary btn-sm py-1 px-2 text-xs editar-despesa-btn">Editar</button>
-                            <button data-id="${despesa.id}" class="btn btn-danger btn-sm py-1 px-2 text-xs remover-despesa-btn">Remover</button>
-                        </td>
-                    `;
-                    corpoTabelaDespesas.appendChild(linha);
-                });
-
+                
+                // Adiciona os event listeners para os botões de editar e remover
                 document.querySelectorAll('.remover-despesa-btn').forEach(button => {
                     button.addEventListener('click', (e) => {
                         const idParaRemover = parseInt(e.target.dataset.id);
-                        removerDespesa(idParaRemover);
+                        showConfirmModal(idParaRemover);
                     });
                 });
                 document.querySelectorAll('.editar-despesa-btn').forEach(button => {
@@ -281,105 +479,40 @@
                         iniciarEdicaoDespesa(idParaEditar);
                     });
                 });
+
+                // Adiciona o event listener para os novos indicadores de status
+                document.querySelectorAll('.status-indicator').forEach(indicator => {
+                    indicator.addEventListener('click', (e) => {
+                        const id = parseInt(e.target.dataset.id);
+                        const despesa = despesas.find(d => d.id === id);
+                        if (despesa) {
+                            despesa.pago = !despesa.pago; // Inverte o status de pago
+                            atualizarTudo();
+                        }
+                    });
+                });
             }
             
-            function setModoFormulario(modo, despesa = null) {
-                if (modo === 'edicao') {
-                    formTitle.textContent = '✏️ Editar Despesa';
-                    formDescription.textContent = 'Modifique os detalhes da despesa selecionada abaixo.';
-                    submitDespesaBtn.textContent = 'Salvar Alterações';
-                    submitDespesaBtn.classList.remove('btn-primary');
-                    submitDespesaBtn.classList.add('btn-secondary');
-                    cancelEditBtn.classList.remove('hidden');
-                    editingExpenseIdInput.value = despesa.id;
-                    tipoDespesaInput.value = despesa.tipo;
-                    descricaoDespesaInput.value = despesa.descricao;
-                    valorDespesaInput.value = despesa.valor;
-                    document.getElementById('formSection').scrollIntoView({ behavior: 'smooth' });
-                } else { // modo 'adicao'
-                    formTitle.textContent = '💸 Adicionar Nova Despesa';
-                    formDescription.textContent = 'Registre cada uma de suas despesas. Detalhar seus gastos ajuda a entender para onde seu dinheiro está indo.';
-                    submitDespesaBtn.textContent = 'Adicionar Despesa';
-                    submitDespesaBtn.classList.remove('btn-secondary');
-                    submitDespesaBtn.classList.add('btn-primary');
-                    cancelEditBtn.classList.add('hidden');
-                    editingExpenseIdInput.value = '';
-                    formAdicionarDespesa.reset();
-                }
+            /**
+             * Agrupa as despesas por tipo para serem exibidas no gráfico.
+             * Converte o tipo para minúsculas e remove espaços para evitar duplicatas.
+             * @param {Array<Object>} despesas - A lista de despesas.
+             * @returns {Object} Um objeto com os tipos de despesa como chaves e a soma dos valores como valores.
+             */
+            function agruparDespesasPorTipo(despesas) {
+                return despesas.reduce((acc, despesa) => {
+                    const tipoNormalizado = despesa.tipo.toLowerCase().trim();
+                    acc[tipoNormalizado] = (acc[tipoNormalizado] || 0) + despesa.valor;
+                    return acc;
+                }, {});
             }
 
-            function iniciarEdicaoDespesa(id) {
-                const despesaParaEditar = despesas.find(d => d.id === id);
-                if (despesaParaEditar) {
-                    setModoFormulario('edicao', despesaParaEditar);
-                }
-            }
-
-            cancelEditBtn.addEventListener('click', () => {
-                setModoFormulario('adicao');
-            });
-
-            formAdicionarDespesa.addEventListener('submit', (e) => {
-                e.preventDefault();
-
-                const tipo = tipoDespesaInput.value.trim();
-                const descricao = descricaoDespesaInput.value.trim();
-                const valor = parseFloat(valorDespesaInput.value);
-                const idEmEdicao = editingExpenseIdInput.value ? parseInt(editingExpenseIdInput.value) : null;
-
-                let errorMsgElement = formAdicionarDespesa.querySelector('.form-error-msg');
-                if (errorMsgElement) errorMsgElement.remove();
-
-
-                if (tipo === '' || isNaN(valor) || valor <= 0) {
-                    errorMsgElement = document.createElement('p');
-                    errorMsgElement.classList.add('form-error-msg', 'text-red-500', 'text-sm', 'mt-2', 'md:col-span-4', 'text-center');
-                    errorMsgElement.textContent = 'Por favor, preencha o tipo e um valor válido para a despesa.';
-                    // Insere antes do primeiro botão
-                    const firstButton = formAdicionarDespesa.querySelector('button[type="submit"], button[type="button"]');
-                    if(firstButton) {
-                        formAdicionarDespesa.insertBefore(errorMsgElement, firstButton.closest('div') || firstButton);
-                    } else {
-                         formAdicionarDespesa.appendChild(errorMsgElement);
-                    }
-                    setTimeout(() => { if(errorMsgElement) errorMsgElement.remove(); }, 3000);
-                    return;
-                }
-
-
-                if (idEmEdicao) { 
-                    const index = despesas.findIndex(d => d.id === idEmEdicao);
-                    if (index !== -1) {
-                        despesas[index] = { ...despesas[index], tipo, descricao, valor };
-                    }
-                } else { 
-                    despesas.push({ id: proximoIdDespesa++, tipo, descricao, valor });
-                }
-                
-                setModoFormulario('adicao'); 
-                tipoDespesaInput.focus();
-
-                atualizarResumo();
-                renderizarTabelaDespesas();
-                atualizarGraficoDespesas();
-                salvarDados();
-            });
-            
-
-            function removerDespesa(id) {
-                if (editingExpenseIdInput.value && parseInt(editingExpenseIdInput.value) === id) {
-                    setModoFormulario('adicao');
-                }
-                despesas = despesas.filter(despesa => despesa.id !== id);
-                atualizarResumo();
-                renderizarTabelaDespesas();
-                atualizarGraficoDespesas();
-                salvarDados();
-            }
-
+            /**
+             * Atualiza ou cria o gráfico de pizza com a distribuição das despesas.
+             */
             function atualizarGraficoDespesas() {
                 const ctx = document.getElementById('graficoDespesas').getContext('2d');
-                
+
                 if (despesas.length === 0) {
                     mensagemGraficoVazio.classList.remove('hidden');
                     if (graficoDespesasInstance) {
@@ -390,18 +523,11 @@
                 }
                 mensagemGraficoVazio.classList.add('hidden');
 
-                const dadosAgrupados = despesas.reduce((acc, despesa) => {
-                    acc[despesa.tipo] = (acc[despesa.tipo] || 0) + despesa.valor;
-                    return acc;
-                }, {});
-
+                const dadosAgrupados = agruparDespesasPorTipo(despesas);
                 const tipos = Object.keys(dadosAgrupados);
                 const valores = Object.values(dadosAgrupados);
 
-                const coresBase = [
-                    '#4f46e5', '#10b981', '#ef4444', '#f59e0b', '#3b82f6', '#8b5cf6', 
-                    '#ec4899', '#6b7280', '#d946ef', '#06b6d4', '#f97316', '#84cc16'
-                ];
+                const coresBase = ['#15803d', '#10b981', '#ef4444', '#f59e0b', '#3b82f6', '#8b5cf6', '#ec4899', '#6b7280', '#d946ef', '#06b6d4', '#f97316', '#84cc16'];
                 const coresGrafico = tipos.map((_, i) => coresBase[i % coresBase.length]);
 
                 if (graficoDespesasInstance) {
@@ -441,8 +567,8 @@
                                                     if (text.length > 16) {
                                                         const words = text.split(' ');
                                                         if (words.length > 1 && words.some(w => w.length > 8)) {
-                                                            text = words.map(w => w.length > 8 ? w.substring(0,8) + '...' : w).join(' ');
-                                                        } else if (text.length > 16){
+                                                            text = words.map(w => w.length > 8 ? w.substring(0, 8) + '...' : w).join(' ');
+                                                        } else if (text.length > 16) {
                                                             text = text.substring(0, 15) + '...';
                                                         }
                                                     }
@@ -479,7 +605,143 @@
                     });
                 }
             }
+
+            /**
+             * Alterna o formulário para o modo de adição ou edição.
+             * @param {string} modo - "adicao" ou "edicao".
+             * @param {Object} [despesa=null] - O objeto de despesa para preencher o formulário, se estiver em modo de edição.
+             */
+            function setModoFormulario(modo, despesa = null) {
+                if (modo === 'edicao') {
+                    formTitle.textContent = '✏️ Editar Despesa';
+                    formDescription.textContent = 'Modifique os detalhes da despesa selecionada abaixo.';
+                    submitDespesaBtn.textContent = 'Salvar Alterações';
+                    submitDespesaBtn.classList.remove('btn-primary');
+                    submitDespesaBtn.classList.add('btn-secondary');
+                    cancelEditBtn.classList.remove('hidden');
+                    editingExpenseIdInput.value = despesa.id;
+                    tipoDespesaInput.value = despesa.tipo;
+                    descricaoDespesaInput.value = despesa.descricao;
+                    valorDespesaInput.value = despesa.valor;
+                    document.getElementById('formSection').scrollIntoView({ behavior: 'smooth' });
+                } else { // modo 'adicao'
+                    formTitle.textContent = '💸 Adicionar Nova Despesa';
+                    formDescription.textContent = 'Registre cada uma de suas despesas. Detalhar seus gastos ajuda a entender para onde seu dinheiro está indo.';
+                    submitDespesaBtn.textContent = 'Adicionar Despesa';
+                    submitDespesaBtn.classList.remove('btn-secondary');
+                    submitDespesaBtn.classList.add('btn-primary');
+                    cancelEditBtn.classList.add('hidden');
+                    editingExpenseIdInput.value = '';
+                    formAdicionarDespesa.reset();
+                    despesaError.classList.add('hidden');
+                }
+            }
+
+            /**
+             * Função para iniciar o modo de edição de uma despesa.
+             * @param {number} id - O ID da despesa a ser editada.
+             */
+            function iniciarEdicaoDespesa(id) {
+                const despesaParaEditar = despesas.find(d => d.id === id);
+                if (despesaParaEditar) {
+                    setModoFormulario('edicao', despesaParaEditar);
+                }
+            }
+
+
+            // Event Listeners
+            // ---
+
+            // Listener para atualizar o soldo
+            atualizarRendaBtn.addEventListener('click', () => {
+                const valorInput = parseFloat(salarioMensalInput.value);
+                if (isNaN(valorInput) || valorInput < 0) {
+                    salarioError.textContent = 'Valor inválido. Insira um número positivo.';
+                    salarioError.classList.remove('hidden');
+                } else {
+                    salarioError.classList.add('hidden');
+                    salarioError.textContent = '';
+                    salario = valorInput;
+                    atualizarTudo();
+                    showFeedbackModal('Soldo Atualizado', `Seu soldo mensal foi definido como ${formatarMoeda(salario)}.`);
+                }
+            });
+
+            // Listener para limpar o erro do soldo ao digitar
+            salarioMensalInput.addEventListener('input', () => {
+                salarioError.classList.add('hidden');
+            });
             
+            // Listener para o formulário de despesa (adicionar/editar)
+            formAdicionarDespesa.addEventListener('submit', (e) => {
+                e.preventDefault();
+                
+                despesaError.classList.add('hidden');
+
+                const tipo = tipoDespesaInput.value.trim();
+                const descricao = descricaoDespesaInput.value.trim();
+                const valor = parseFloat(valorDespesaInput.value);
+                const idEmEdicao = editingExpenseIdInput.value ? parseInt(editingExpenseIdInput.value) : null;
+
+                // A validação agora é feita no tipo e no valor
+                if (tipo === '' || isNaN(valor) || valor <= 0) {
+                    despesaError.textContent = 'Por favor, preencha o tipo e um valor válido para a despesa.';
+                    despesaError.classList.remove('hidden');
+                    return;
+                }
+
+                if (idEmEdicao) {
+                    const index = despesas.findIndex(d => d.id === idEmEdicao);
+                    if (index !== -1) {
+                        despesas[index] = { ...despesas[index], tipo, descricao, valor };
+                        showFeedbackModal('Despesa Editada', 'A despesa foi atualizada com sucesso.');
+                    }
+                } else {
+                    despesas.push({ id: proximoIdDespesa++, tipo, descricao, valor, pago: false });
+                    showFeedbackModal('Despesa Adicionada', 'Nova despesa registrada com sucesso.');
+                }
+
+                setModoFormulario('adicao');
+                tipoDespesaInput.focus();
+                atualizarTudo();
+            });
+
+            // Listener para limpar o erro da despesa ao digitar
+            tipoDespesaInput.addEventListener('input', () => { despesaError.classList.add('hidden'); });
+            valorDespesaInput.addEventListener('input', () => { despesaError.classList.add('hidden'); });
+
+            // Listener para cancelar a edição
+            cancelEditBtn.addEventListener('click', () => {
+                setModoFormulario('adicao');
+            });
+            
+            // Lógica para o modal de confirmação de remoção
+            function showConfirmModal(id) {
+                idParaConfirmarRemocao = id;
+                confirmModal.classList.remove('hidden');
+                confirmModal.classList.add('active');
+            }
+            confirmActionBtn.addEventListener('click', () => {
+                if (idParaConfirmarRemocao !== null) {
+                    despesas = despesas.filter(despesa => despesa.id !== idParaConfirmarRemocao);
+                    atualizarTudo();
+                    setModoFormulario('adicao'); // Garante que saia do modo de edição caso a despesa sendo removida esteja nele
+                    idParaConfirmarRemocao = null;
+                    confirmModal.classList.remove('active');
+                    setTimeout(() => confirmModal.classList.add('hidden'), 300);
+                    showFeedbackModal('Despesa Removida', 'A despesa foi removida com sucesso.');
+                }
+            });
+            confirmCancelBtn.addEventListener('click', () => {
+                idParaConfirmarRemocao = null;
+                confirmModal.classList.remove('active');
+                setTimeout(() => confirmModal.classList.add('hidden'), 300);
+            });
+            
+            // Listener para fechar o modal de feedback
+            feedbackCloseBtn.addEventListener('click', hideFeedbackModal);
+
+            // Chamada inicial para carregar os dados
             carregarDados();
         });
     </script>
